@@ -32,6 +32,12 @@ double tPlotDelta = 0;
 
 int NumberOfBodies = 0;
 
+// Collision constant
+double c;
+
+// array to keep track of merged particles
+bool *alive;
+
 /**
  * Pointer to pointers. Each pointer in turn points to three coordinates, i.e.
  * each pointer represents one molecule/particle/body.
@@ -82,6 +88,12 @@ void setUp(int argc, char** argv) {
   v    = new double*[NumberOfBodies];
   mass = new double [NumberOfBodies];
 
+  // init c
+  c = 0.01/NumberOfBodies;
+
+  // init alive
+  alive = new bool[NumberOfBodies];
+
   int readArgument = 1;
 
   tPlotDelta   = std::stof(argv[readArgument]); readArgument++;
@@ -89,6 +101,10 @@ void setUp(int argc, char** argv) {
   timeStepSize = std::stof(argv[readArgument]); readArgument++;
 
   for (int i=0; i<NumberOfBodies; i++) {
+
+    // init alive to True for all particles at start
+    alive[i] = true;
+
     x[i] = new double[3];
     v[i] = new double[3];
 
@@ -235,6 +251,54 @@ void updateBody() {
       maxV = std::max(maxV, currentV);
   }
   t += timeStepSize;
+   
+  int num_cols = 0;
+  int elements_rem = 0;
+  do {
+      num_cols = 0;
+      for(int i = 0;i<NumberOfBodies;i++){
+          for(int j = i+1;j<NumberOfBodies;j++){
+              if(alive[i] && alive[j]){ 
+                    double distance = sqrt((x[i][0]-x[j][0]) * (x[i][0]-x[j][0]) +
+                                           (x[i][1]-x[j][1]) * (x[i][1]-x[j][1]) +
+                                           (x[i][2]-x[j][2]) * (x[i][2]-x[j][2]));
+                    if(distance <= c*(mass[i] + mass[j])) {
+                        // update velocity of merged particle
+                        v[i][0] = ((mass[i]*v[i][0])/(mass[i]+mass[j]))+((mass[j]*v[j][0])/(mass[i]+mass[j]));
+                        v[i][1] = ((mass[i]*v[i][1])/(mass[i]+mass[j]))+((mass[j]*v[j][1])/(mass[i]+mass[j]));
+                        v[i][2] = ((mass[i]*v[i][2])/(mass[i]+mass[j]))+((mass[j]*v[j][2])/(mass[i]+mass[j]));
+                        // update mass of merged particle
+                        mass[i] = mass[i] + mass[j];
+                        // update position of merged particle
+                        x[i][0] = ((mass[i]*x[i][0])+(mass[j]*x[j][0]))/(mass[i] + mass[j]);
+                        x[i][1] = ((mass[i]*x[i][1])+(mass[j]*x[j][1]))/(mass[i] + mass[j]);
+                        x[i][2] = ((mass[i]*x[i][2])+(mass[j]*x[j][2]))/(mass[i] + mass[j]);
+                        alive[j] = false; // J has been merged so is no longer valid
+                        num_cols += 1;
+                        elements_rem += 1;
+                    }
+              }
+          }
+      }
+  }while(num_cols > 0);
+  NumberOfBodies -= elements_rem;
+  int tmp_new_index = 0;
+  for (int i = 0; i<(NumberOfBodies+elements_rem);i++){
+      if(alive[i]){
+        mass[tmp_new_index] = mass[i];
+        v[tmp_new_index][0] = v[i][0];
+        v[tmp_new_index][1] = v[i][1];
+        v[tmp_new_index][2] = v[i][2];
+        x[tmp_new_index][0] = x[i][0];
+        x[tmp_new_index][1] = x[i][1];
+        x[tmp_new_index][2] = x[i][2];
+        alive[tmp_new_index] = true;
+        tmp_new_index += 1;
+      }
+  }
+
+
+
 
   delete[] force0;
   delete[] force1;
