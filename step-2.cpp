@@ -221,7 +221,6 @@ void updateBody() {
       double tmp_force0 = 0;
       double tmp_force1 = 0;
       double tmp_force2 = 0;
-      #pragma omp simd reduction(+:tmp_force0,tmp_force1,tmp_force2) reduction(min:minDx)
       for (int i = 0; i < NumberOfBodies; i++) {
         if(i!=j){
         const double tmp_dist = (x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]);
@@ -237,7 +236,6 @@ void updateBody() {
       force1[j] = tmp_force1;
       force2[j] = tmp_force2;
   }
-  #pragma omp simd reduction(max:maxV)
   for(int j = 0;j<NumberOfBodies;j++){
       x[j][0] = x[j][0] + timeStepSize * v[j][0];
       x[j][1] = x[j][1] + timeStepSize * v[j][1];
