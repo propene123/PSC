@@ -216,20 +216,21 @@ void updateBody() {
   double* force0 = new double[NumberOfBodies];
   double* force1 = new double[NumberOfBodies];
   double* force2 = new double[NumberOfBodies];
+  double* distances = new double[NumberOfBodies];
 
   for (int j = 0; j < NumberOfBodies; j++){
       double tmp_force0 = 0;
       double tmp_force1 = 0;
       double tmp_force2 = 0;
+      #pragma omp simd reduction(+:tmp_force0,tmp_force1,tmp_force2) reduction(min:minDx)
       for (int i = 0; i < NumberOfBodies; i++) {
         if(i!=j){
-        const double tmp_dist = (x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]);
-        const double distance = sqrt(tmp_dist);
+        distances[i] = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
         // x,y,z forces acting on particle j from i
-        tmp_force0 += (x[i][0]-x[j][0]) * mass[i]*mass[j] / distance / distance / distance ;
-        tmp_force1 += (x[i][1]-x[j][1]) * mass[i]*mass[j] / distance / distance / distance ;
-        tmp_force2 += (x[i][2]-x[j][2]) * mass[i]*mass[j] / distance / distance / distance ;
-        minDx = std::min( minDx,distance );
+        tmp_force0 += (x[i][0]-x[j][0]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
+        tmp_force1 += (x[i][1]-x[j][1]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
+        tmp_force2 += (x[i][2]-x[j][2]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
+        minDx = std::min( minDx,distances[i] );
         }
       }
       force0[j] = tmp_force0;
@@ -298,6 +299,7 @@ void updateBody() {
   delete[] force0;
   delete[] force1;
   delete[] force2;
+  delete[] distances;
 }
 
 
