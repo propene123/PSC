@@ -217,29 +217,27 @@ void updateBody() {
   double* force1 = new double[NumberOfBodies];
   double* force2 = new double[NumberOfBodies];
 
-  for(int i =0;i<NumberOfBodies;i++){
-      // set forces for i to 0.0
-      force0[i] = 0.0;
-      force1[i] = 0.0;
-      force2[i] = 0.0;
-  }
-
   for (int j = 0; j < NumberOfBodies; j++){
-      for (int i = j+1; i < NumberOfBodies; i++) {
+      double tmp_force0 = 0;
+      double tmp_force1 = 0;
+      double tmp_force2 = 0;
+      #pragma omp simd reduction(+:tmp_force0,tmp_force1,tmp_force2) reduction(min:minDx)
+      for (int i = 0; i < NumberOfBodies; i++) {
+        if(i!=j){
         const double tmp_dist = (x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]);
         const double distance = sqrt(tmp_dist);
         // x,y,z forces acting on particle j from i
-        force0[j] += (x[i][0]-x[j][0]) * mass[i]*mass[j] / distance / distance / distance ;
-        force1[j] += (x[i][1]-x[j][1]) * mass[i]*mass[j] / distance / distance / distance ;
-        force2[j] += (x[i][2]-x[j][2]) * mass[i]*mass[j] / distance / distance / distance ;
-        // x,y,z forces acting on i from j
-        force0[i] += (x[j][0]-x[i][0]) * mass[j]*mass[i] / distance / distance / distance ;
-        force1[i] += (x[j][1]-x[i][1]) * mass[j]*mass[i] / distance / distance / distance ;
-        force2[i] += (x[j][2]-x[i][2]) * mass[j]*mass[i] / distance / distance / distance ;
-
+        tmp_force0 += (x[i][0]-x[j][0]) * mass[i]*mass[j] / distance / distance / distance ;
+        tmp_force1 += (x[i][1]-x[j][1]) * mass[i]*mass[j] / distance / distance / distance ;
+        tmp_force2 += (x[i][2]-x[j][2]) * mass[i]*mass[j] / distance / distance / distance ;
         minDx = std::min( minDx,distance );
+        }
       }
+      force0[j] = tmp_force0;
+      force1[j] = tmp_force1;
+      force2[j] = tmp_force2;
   }
+  #pragma omp simd reduction(max:maxV)
   for(int j = 0;j<NumberOfBodies;j++){
       x[j][0] = x[j][0] + timeStepSize * v[j][0];
       x[j][1] = x[j][1] + timeStepSize * v[j][1];
@@ -247,8 +245,7 @@ void updateBody() {
       v[j][0] = v[j][0] + timeStepSize * force0[j] / mass[j];
       v[j][1] = v[j][1] + timeStepSize * force1[j] / mass[j];
       v[j][2] = v[j][2] + timeStepSize * force2[j] / mass[j];
-      const double currentV = std::sqrt( v[j][0]*v[j][0] + v[j][1]*v[j][1] + v[j][2]*v[j][2] );
-      maxV = std::max(maxV, currentV);
+      maxV = std::max(maxV, std::sqrt( v[j][0]*v[j][0] + v[j][1]*v[j][1] + v[j][2]*v[j][2] ));
   }
   t += timeStepSize;
    
