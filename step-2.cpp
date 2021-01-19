@@ -216,7 +216,6 @@ void updateBody() {
   double* force0 = new double[NumberOfBodies];
   double* force1 = new double[NumberOfBodies];
   double* force2 = new double[NumberOfBodies];
-  double* distances = new double[NumberOfBodies];
 
   for (int j = 0; j < NumberOfBodies; j++){
       double tmp_force0 = 0;
@@ -225,12 +224,12 @@ void updateBody() {
       #pragma omp simd reduction(+:tmp_force0,tmp_force1,tmp_force2) reduction(min:minDx)
       for (int i = 0; i < NumberOfBodies; i++) {
         if(i!=j){
-        distances[i] = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
+        const double distance = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
         // x,y,z forces acting on particle j from i
-        tmp_force0 += (x[i][0]-x[j][0]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
-        tmp_force1 += (x[i][1]-x[j][1]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
-        tmp_force2 += (x[i][2]-x[j][2]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
-        minDx = std::min( minDx,distances[i] );
+        tmp_force0 += (x[i][0]-x[j][0]) * mass[i]*mass[j] / distance / distance / distance ;
+        tmp_force1 += (x[i][1]-x[j][1]) * mass[i]*mass[j] / distance / distance / distance ;
+        tmp_force2 += (x[i][2]-x[j][2]) * mass[i]*mass[j] / distance / distance / distance ;
+        minDx = std::min( minDx,distance );
         }
       }
       force0[j] = tmp_force0;
@@ -238,7 +237,7 @@ void updateBody() {
       force2[j] = tmp_force2;
   }
   #pragma omp simd reduction(max:maxV)
-  for(int j = 0;j<NumberOfBodies;j++){
+  for (int j = 0;j<NumberOfBodies;j++){
       x[j][0] = x[j][0] + timeStepSize * v[j][0];
       x[j][1] = x[j][1] + timeStepSize * v[j][1];
       x[j][2] = x[j][2] + timeStepSize * v[j][2];
@@ -254,22 +253,21 @@ void updateBody() {
   do {
       num_cols = 0;
       for(int i = 0;i<NumberOfBodies;i++){
-          for(int j = 0;j<NumberOfBodies;j++){
-              if(alive[i] && alive[j] && i!=j){ 
-                    double distance = sqrt((x[i][0]-x[j][0]) * (x[i][0]-x[j][0]) +
+          for(int j = i+1;j<NumberOfBodies;j++){
+              if(alive[i] && alive[j]){ 
+                    const double distance = sqrt((x[i][0]-x[j][0]) * (x[i][0]-x[j][0]) +
                                            (x[i][1]-x[j][1]) * (x[i][1]-x[j][1]) +
                                            (x[i][2]-x[j][2]) * (x[i][2]-x[j][2]));
                     if(distance <= c*(mass[i] + mass[j])) {
+                        #pragma omp simd
+                        for (int k = 0;k<3;k++){
                         // update velocity of merged particle
-                        v[i][0] = ((mass[i]*v[i][0])/(mass[i]+mass[j]))+((mass[j]*v[j][0])/(mass[i]+mass[j]));
-                        v[i][1] = ((mass[i]*v[i][1])/(mass[i]+mass[j]))+((mass[j]*v[j][1])/(mass[i]+mass[j]));
-                        v[i][2] = ((mass[i]*v[i][2])/(mass[i]+mass[j]))+((mass[j]*v[j][2])/(mass[i]+mass[j]));
+                        v[i][k] = ((mass[i]*v[i][k])/(mass[i]+mass[j]))+((mass[j]*v[j][k])/(mass[i]+mass[j]));
+                        // update position of merged particle
+                        x[i][k] = ((mass[i]*x[i][k])+(mass[j]*x[j][k]))/(mass[i] + mass[j]);
+                        }
                         // update mass of merged particle
                         mass[i] = mass[i] + mass[j];
-                        // update position of merged particle
-                        x[i][0] = ((mass[i]*x[i][0])+(mass[j]*x[j][0]))/(mass[i] + mass[j]);
-                        x[i][1] = ((mass[i]*x[i][1])+(mass[j]*x[j][1]))/(mass[i] + mass[j]);
-                        x[i][2] = ((mass[i]*x[i][2])+(mass[j]*x[j][2]))/(mass[i] + mass[j]);
                         alive[j] = false; // J has been merged so is no longer valid
                         num_cols += 1;
                         elements_rem += 1;
@@ -283,12 +281,11 @@ void updateBody() {
   for (int i = 0; i<(NumberOfBodies+elements_rem);i++){
       if(alive[i]){
         mass[tmp_new_index] = mass[i];
-        v[tmp_new_index][0] = v[i][0];
-        v[tmp_new_index][1] = v[i][1];
-        v[tmp_new_index][2] = v[i][2];
-        x[tmp_new_index][0] = x[i][0];
-        x[tmp_new_index][1] = x[i][1];
-        x[tmp_new_index][2] = x[i][2];
+        #pragma omp simd
+        for (int j = 0;j<3;j++){
+            v[tmp_new_index][j] = v[i][j];
+            x[tmp_new_index][j] = x[i][j];
+        }
         alive[tmp_new_index] = true;
         tmp_new_index += 1;
       }
@@ -300,7 +297,6 @@ void updateBody() {
   delete[] force0;
   delete[] force1;
   delete[] force2;
-  delete[] distances;
 }
 
 

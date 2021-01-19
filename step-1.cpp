@@ -266,12 +266,12 @@ void updateBody() {
                         v[i][0] = ((mass[i]*v[i][0])/(mass[i]+mass[j]))+((mass[j]*v[j][0])/(mass[i]+mass[j]));
                         v[i][1] = ((mass[i]*v[i][1])/(mass[i]+mass[j]))+((mass[j]*v[j][1])/(mass[i]+mass[j]));
                         v[i][2] = ((mass[i]*v[i][2])/(mass[i]+mass[j]))+((mass[j]*v[j][2])/(mass[i]+mass[j]));
-                        // update mass of merged particle
-                        mass[i] = mass[i] + mass[j];
                         // update position of merged particle
                         x[i][0] = ((mass[i]*x[i][0])+(mass[j]*x[j][0]))/(mass[i] + mass[j]);
                         x[i][1] = ((mass[i]*x[i][1])+(mass[j]*x[j][1]))/(mass[i] + mass[j]);
                         x[i][2] = ((mass[i]*x[i][2])+(mass[j]*x[j][2]))/(mass[i] + mass[j]);
+                        // update mass of merged particle
+                        mass[i] = mass[i] + mass[j];
                         alive[j] = false; // J has been merged so is no longer valid
                         num_cols += 1;
                         elements_rem += 1;
