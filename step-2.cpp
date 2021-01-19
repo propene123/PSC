@@ -237,6 +237,7 @@ void updateBody() {
       force1[j] = tmp_force1;
       force2[j] = tmp_force2;
   }
+  #pragma omp simd reduction(max:maxV)
   for(int j = 0;j<NumberOfBodies;j++){
       x[j][0] = x[j][0] + timeStepSize * v[j][0];
       x[j][1] = x[j][1] + timeStepSize * v[j][1];
@@ -253,8 +254,8 @@ void updateBody() {
   do {
       num_cols = 0;
       for(int i = 0;i<NumberOfBodies;i++){
-          for(int j = i+1;j<NumberOfBodies;j++){
-              if(alive[i] && alive[j]){ 
+          for(int j = 0;j<NumberOfBodies;j++){
+              if(alive[i] && alive[j] && i!=j){ 
                     double distance = sqrt((x[i][0]-x[j][0]) * (x[i][0]-x[j][0]) +
                                            (x[i][1]-x[j][1]) * (x[i][1]-x[j][1]) +
                                            (x[i][2]-x[j][2]) * (x[i][2]-x[j][2]));
