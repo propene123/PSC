@@ -226,8 +226,7 @@ void updateBody() {
 
   for (int j = 0; j < NumberOfBodies; j++){
       for (int i = j+1; i < NumberOfBodies; i++) {
-        const double tmp_dist = (x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]);
-        const double distance = sqrt(tmp_dist);
+        const double distance = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
         // x,y,z forces acting on particle j from i
         force0[j] += (x[i][0]-x[j][0]) * mass[i]*mass[j] / distance / distance / distance ;
         force1[j] += (x[i][1]-x[j][1]) * mass[i]*mass[j] / distance / distance / distance ;
@@ -284,6 +283,7 @@ void updateBody() {
   int tmp_new_index = 0;
   for (int i = 0; i<(NumberOfBodies+elements_rem);i++){
       if(alive[i]){
+        alive[i] = false;
         mass[tmp_new_index] = mass[i];
         v[tmp_new_index][0] = v[i][0];
         v[tmp_new_index][1] = v[i][1];

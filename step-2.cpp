@@ -216,35 +216,51 @@ void updateBody() {
   double* force0 = new double[NumberOfBodies];
   double* force1 = new double[NumberOfBodies];
   double* force2 = new double[NumberOfBodies];
+  double* distances = new double[NumberOfBodies];
+  double* velocities = new double[NumberOfBodies];
+  for (int j = 0;j<NumberOfBodies;j++){
+      force0[j] = 0;
+      force1[j] = 0;
+      force2[j] = 0;
+  }
 
   for (int j = 0; j < NumberOfBodies; j++){
-      double tmp_force0 = 0;
-      double tmp_force1 = 0;
-      double tmp_force2 = 0;
-      #pragma omp simd reduction(+:tmp_force0,tmp_force1,tmp_force2) reduction(min:minDx)
-      for (int i = 0; i < NumberOfBodies; i++) {
-        if(i!=j){
-        const double distance = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
+      for (int i = j+1; i < NumberOfBodies; i++) {
+        distances[i] = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
         // x,y,z forces acting on particle j from i
-        tmp_force0 += (x[i][0]-x[j][0]) * mass[i]*mass[j] / distance / distance / distance ;
-        tmp_force1 += (x[i][1]-x[j][1]) * mass[i]*mass[j] / distance / distance / distance ;
-        tmp_force2 += (x[i][2]-x[j][2]) * mass[i]*mass[j] / distance / distance / distance ;
-        minDx = std::min( minDx,distance );
-        }
+        const double f0 = (x[i][0]-x[j][0]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
+        const double f1 = (x[i][1]-x[j][1]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
+        const double f2 = (x[i][2]-x[j][2]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
+        force0[j] += f0;
+        force1[j] += f1;
+        force2[j] += f2;
+        // x,y,z forces acting on i from j
+        force0[i] += -f0;
+        force1[i] += -f1;
+        force2[i] += -f2;
       }
-      force0[j] = tmp_force0;
-      force1[j] = tmp_force1;
-      force2[j] = tmp_force2;
+      for (int i = j+1;i<NumberOfBodies;i++){
+        minDx = std::min(minDx,distances[i]);
+      }
   }
-  #pragma omp simd reduction(max:maxV)
+      #pragma omp simd 
+      for (int j = 0;j<NumberOfBodies;j++){
+          x[j][0] = x[j][0] + timeStepSize * v[j][0];
+          x[j][1] = x[j][1] + timeStepSize * v[j][1];
+          x[j][2] = x[j][2] + timeStepSize * v[j][2];
+      }
+      #pragma omp simd
+      for(int j = 0;j<NumberOfBodies;j++){
+          v[j][0] = v[j][0] + timeStepSize * force0[j] / mass[j];
+          v[j][1] = v[j][1] + timeStepSize * force1[j] / mass[j];
+          v[j][2] = v[j][2] + timeStepSize * force2[j] / mass[j];
+      }
+      for (int j = 0;j<NumberOfBodies;j++){
+        velocities[j] = std::sqrt( v[j][0]*v[j][0] + v[j][1]*v[j][1] + v[j][2]*v[j][2]);
+      }
+
   for (int j = 0;j<NumberOfBodies;j++){
-      x[j][0] = x[j][0] + timeStepSize * v[j][0];
-      x[j][1] = x[j][1] + timeStepSize * v[j][1];
-      x[j][2] = x[j][2] + timeStepSize * v[j][2];
-      v[j][0] = v[j][0] + timeStepSize * force0[j] / mass[j];
-      v[j][1] = v[j][1] + timeStepSize * force1[j] / mass[j];
-      v[j][2] = v[j][2] + timeStepSize * force2[j] / mass[j];
-      maxV = std::max(maxV, std::sqrt( v[j][0]*v[j][0] + v[j][1]*v[j][1] + v[j][2]*v[j][2] ));
+      maxV = std::max(maxV, velocities[j]);
   }
   t += timeStepSize;
    
@@ -259,7 +275,6 @@ void updateBody() {
                                            (x[i][1]-x[j][1]) * (x[i][1]-x[j][1]) +
                                            (x[i][2]-x[j][2]) * (x[i][2]-x[j][2]));
                     if(distance <= c*(mass[i] + mass[j])) {
-                        #pragma omp simd
                         for (int k = 0;k<3;k++){
                         // update velocity of merged particle
                         v[i][k] = ((mass[i]*v[i][k])/(mass[i]+mass[j]))+((mass[j]*v[j][k])/(mass[i]+mass[j]));
@@ -280,8 +295,8 @@ void updateBody() {
   int tmp_new_index = 0;
   for (int i = 0; i<(NumberOfBodies+elements_rem);i++){
       if(alive[i]){
+        alive[i] = false;
         mass[tmp_new_index] = mass[i];
-        #pragma omp simd
         for (int j = 0;j<3;j++){
             v[tmp_new_index][j] = v[i][j];
             x[tmp_new_index][j] = x[i][j];
@@ -297,6 +312,8 @@ void updateBody() {
   delete[] force0;
   delete[] force1;
   delete[] force2;
+  delete[] distances; 
+  delete[] velocities; 
 }
 
 
