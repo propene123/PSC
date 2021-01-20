@@ -270,11 +270,14 @@ void updateBody() {
       num_cols = 0;
       for(int i = 0;i<NumberOfBodies;i++){
           for(int j = i+1;j<NumberOfBodies;j++){
+              distances[j] = sqrt((x[i][0]-x[j][0]) * (x[i][0]-x[j][0]) +
+                                   (x[i][1]-x[j][1]) * (x[i][1]-x[j][1]) +
+                                   (x[i][2]-x[j][2]) * (x[i][2]-x[j][2]));
+          }
+          for(int j = i+1;j<NumberOfBodies;j++){
               if(alive[i] && alive[j]){ 
-                    const double distance = sqrt((x[i][0]-x[j][0]) * (x[i][0]-x[j][0]) +
-                                           (x[i][1]-x[j][1]) * (x[i][1]-x[j][1]) +
-                                           (x[i][2]-x[j][2]) * (x[i][2]-x[j][2]));
-                    if(distance <= c*(mass[i] + mass[j])) {
+                    if(distances[j] <= c*(mass[i] + mass[j])) {
+                        #pragma omp simd
                         for (int k = 0;k<3;k++){
                         // update velocity of merged particle
                         v[i][k] = ((mass[i]*v[i][k])/(mass[i]+mass[j]))+((mass[j]*v[j][k])/(mass[i]+mass[j]));
