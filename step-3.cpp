@@ -325,9 +325,6 @@ void updateBody() {
           v[j][1] = v_back[j][1] + timeStepSize * force1[j] / mass[j];
           v[j][2] = v_back[j][2] + timeStepSize * force2[j] / mass[j];
       }
-      for (int j = 0;j<NumberOfBodies;j++){
-        velocities[j] = std::sqrt( v[j][0]*v[j][0] + v[j][1]*v[j][1] + v[j][2]*v[j][2]);
-      }
       for(int j = 0; j<NumberOfBodies;j++){
           for (int i = j+1;i<NumberOfBodies;i++){
             distances[i] = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
@@ -335,6 +332,9 @@ void updateBody() {
           for (int i = j+1;i<NumberOfBodies;i++){
             minDx = std::min(minDx,distances[i]);
           }
+      }
+      for (int j = 0;j<NumberOfBodies;j++){
+        velocities[j] = std::sqrt( v[j][0]*v[j][0] + v[j][1]*v[j][1] + v[j][2]*v[j][2]);
       }
 
   for (int j = 0;j<NumberOfBodies;j++){
