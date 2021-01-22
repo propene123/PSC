@@ -277,7 +277,6 @@ void updateBody() {
           for(int j = i+1;j<NumberOfBodies;j++){
               if(alive[i] && alive[j]){ 
                     if(distances[j] <= c*(mass[i] + mass[j])) {
-                        #pragma omp simd
                         for (int k = 0;k<3;k++){
                         // update velocity of merged particle
                         v[i][k] = ((mass[i]*v[i][k])/(mass[i]+mass[j]))+((mass[j]*v[j][k])/(mass[i]+mass[j]));

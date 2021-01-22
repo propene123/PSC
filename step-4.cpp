@@ -259,6 +259,14 @@ void future_shot(){
 void updateBody() {
   // backup current y values for rk(2)
   // perform future shot store y_hat in x and v
+  for(int j = 0;j<NumberOfBodies;j++){
+      x_back[j][0] = x[j][0];
+      x_back[j][1] = x[j][1];
+      x_back[j][2] = x[j][2];
+      v_back[j][0] = v[j][0];
+      v_back[j][1] = v[j][1];
+      v_back[j][2] = v[j][2];
+  }
   future_shot();
   maxV   = 0.0;
   minDx  = std::numeric_limits<double>::max();
@@ -276,12 +284,6 @@ void updateBody() {
       force0[j] = 0;
       force1[j] = 0;
       force2[j] = 0;
-      x_back[j][0] = x[j][0];
-      x_back[j][1] = x[j][1];
-      x_back[j][2] = x[j][2];
-      v_back[j][0] = v[j][0];
-      v_back[j][1] = v[j][1];
-      v_back[j][2] = v[j][2];
       for (int i = 0; i < NumberOfBodies; i++) {
           if(i!=j){
         // calculate forces using y_hat as this is the derivative for velocities update
@@ -329,7 +331,6 @@ void updateBody() {
           for(int j = i+1;j<NumberOfBodies;j++){
               if(alive[i] && alive[j]){ 
                     if(distances[j] <= c*(mass[i] + mass[j])) {
-                        #pragma omp simd
                         for (int k = 0;k<3;k++){
                         // update velocity of merged particle
                         v[i][k] = ((mass[i]*v[i][k])/(mass[i]+mass[j]))+((mass[j]*v[j][k])/(mass[i]+mass[j]));
