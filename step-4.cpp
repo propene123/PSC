@@ -217,14 +217,10 @@ void future_shot(){
   double* force2 = new double[NumberOfBodies];
 
   #pragma omp parallel for
-  for (int j = 0;j<NumberOfBodies;j++){
+  for (int j = 0; j < NumberOfBodies; j++){
       force0[j] = 0;
       force1[j] = 0;
       force2[j] = 0;
-  }
-
-  #pragma omp parallel for
-  for (int j = 0; j < NumberOfBodies; j++){
       for (int i = 0; i < NumberOfBodies; i++) {
           if(i!=j){
         const double distance = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
@@ -274,8 +270,9 @@ void updateBody() {
   double* force1 = new double[NumberOfBodies];
   double* force2 = new double[NumberOfBodies];
   double* distances = new double[NumberOfBodies];
+
 #pragma omp parallel for
-  for (int j = 0;j<NumberOfBodies;j++){
+  for (int j = 0; j < NumberOfBodies; j++){
       force0[j] = 0;
       force1[j] = 0;
       force2[j] = 0;
@@ -285,10 +282,6 @@ void updateBody() {
       v_back[j][0] = v[j][0];
       v_back[j][1] = v[j][1];
       v_back[j][2] = v[j][2];
-  }
-
-#pragma omp parallel for
-  for (int j = 0; j < NumberOfBodies; j++){
       for (int i = 0; i < NumberOfBodies; i++) {
           if(i!=j){
         // calculate forces using y_hat as this is the derivative for velocities update
