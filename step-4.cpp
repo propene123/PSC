@@ -215,37 +215,37 @@ void future_shot(){
   double* force0 = new double[NumberOfBodies];
   double* force1 = new double[NumberOfBodies];
   double* force2 = new double[NumberOfBodies];
-  double* distances = new double[NumberOfBodies];
+
+  #pragma omp parallel for
   for (int j = 0;j<NumberOfBodies;j++){
       force0[j] = 0;
       force1[j] = 0;
       force2[j] = 0;
   }
 
+  #pragma omp parallel for
   for (int j = 0; j < NumberOfBodies; j++){
       for (int i = j+1; i < NumberOfBodies; i++) {
-        distances[i] = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
+        const double distance = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
         // x,y,z forces acting on particle j from i
-        const double f0 = (x[i][0]-x[j][0]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
-        const double f1 = (x[i][1]-x[j][1]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
-        const double f2 = (x[i][2]-x[j][2]) * mass[i]*mass[j] / distances[i] / distances[i] / distances[i] ;
+        const double f0 = (x[i][0]-x[j][0]) * mass[i]*mass[j] / distance / distance / distance ;
+        const double f1 = (x[i][1]-x[j][1]) * mass[i]*mass[j] / distance / distance / distance ;
+        const double f2 = (x[i][2]-x[j][2]) * mass[i]*mass[j] / distance / distance / distance ;
         force0[j] += f0;
         force1[j] += f1;
         force2[j] += f2;
         // x,y,z forces acting on i from j
+        // CHECK FOR DATA RACE
         force0[i] += -f0;
         force1[i] += -f1;
         force2[i] += -f2;
       }
   }
-      #pragma omp simd 
+      #pragma omp parallel for
       for (int j = 0;j<NumberOfBodies;j++){
           x[j][0] = x[j][0] + timeStepSize/2 * v[j][0];
           x[j][1] = x[j][1] + timeStepSize/2 * v[j][1];
           x[j][2] = x[j][2] + timeStepSize/2 * v[j][2];
-      }
-      #pragma omp simd
-      for(int j = 0;j<NumberOfBodies;j++){
           v[j][0] = v[j][0] + timeStepSize/2 * force0[j] / mass[j];
           v[j][1] = v[j][1] + timeStepSize/2 * force1[j] / mass[j];
           v[j][2] = v[j][2] + timeStepSize/2 * force2[j] / mass[j];
@@ -253,7 +253,6 @@ void future_shot(){
       delete[] force0;
       delete[] force1;
       delete[] force2;
-      delete[] distances; 
 }
 
 
@@ -309,15 +308,15 @@ void updateBody() {
         force1[i] += -f1;
         force2[i] += -f2;
       }
+      for (int i = j+1;i<NumberOfBodies;i++){
+        minDx = std::min(minDx,distances[i]);
+      }
   }
-      #pragma omp simd 
+      #pragma omp parallel for
       for (int j = 0;j<NumberOfBodies;j++){
           x[j][0] = x_back[j][0] + timeStepSize * v[j][0];
           x[j][1] = x_back[j][1] + timeStepSize * v[j][1];
           x[j][2] = x_back[j][2] + timeStepSize * v[j][2];
-      }
-      #pragma omp simd
-      for(int j = 0;j<NumberOfBodies;j++){
           v[j][0] = v_back[j][0] + timeStepSize * force0[j] / mass[j];
           v[j][1] = v_back[j][1] + timeStepSize * force1[j] / mass[j];
           v[j][2] = v_back[j][2] + timeStepSize * force2[j] / mass[j];
