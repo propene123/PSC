@@ -225,7 +225,8 @@ void future_shot(){
 
   #pragma omp parallel for
   for (int j = 0; j < NumberOfBodies; j++){
-      for (int i = j+1; i < NumberOfBodies; i++) {
+      for (int i = 0; i < NumberOfBodies; i++) {
+          if(i!=j){
         const double distance = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
         // x,y,z forces acting on particle j from i
         const double f0 = (x[i][0]-x[j][0]) * mass[i]*mass[j] / distance / distance / distance ;
@@ -234,11 +235,7 @@ void future_shot(){
         force0[j] += f0;
         force1[j] += f1;
         force2[j] += f2;
-        // x,y,z forces acting on i from j
-        // CHECK FOR DATA RACE
-        force0[i] += -f0;
-        force1[i] += -f1;
-        force2[i] += -f2;
+          }
       }
   }
       #pragma omp parallel for
@@ -292,7 +289,8 @@ void updateBody() {
 
 #pragma omp parallel for
   for (int j = 0; j < NumberOfBodies; j++){
-      for (int i = j+1; i < NumberOfBodies; i++) {
+      for (int i = 0; i < NumberOfBodies; i++) {
+          if(i!=j){
         // calculate forces using y_hat as this is the derivative for velocities update
         const double distance = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
         // x,y,z forces acting on particle j from i
@@ -302,10 +300,7 @@ void updateBody() {
         force0[j] += f0;
         force1[j] += f1;
         force2[j] += f2;
-        // x,y,z forces acting on i from j
-        force0[i] += -f0;
-        force1[i] += -f1;
-        force2[i] += -f2;
+          }
       }
   }
       #pragma omp parallel for reduction(max:maxV)
@@ -332,6 +327,7 @@ void updateBody() {
   do {
       num_cols = 0;
       for(int i = 0;i<NumberOfBodies;i++){
+          #pragma omp parallel for
           for(int j = i+1;j<NumberOfBodies;j++){
               distances[j] = sqrt((x[i][0]-x[j][0]) * (x[i][0]-x[j][0]) +
                                    (x[i][1]-x[j][1]) * (x[i][1]-x[j][1]) +
