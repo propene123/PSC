@@ -9,13 +9,14 @@ def objective(x, m, c):
 
 
 
-dataframe = read_csv('./step2conv', header=None)
+dataframe = read_csv('./step1conv', header=None)
 data = dataframe.values
 x, y = data[:,0], data[:,-1]
-x_ar = np.array(list([x]))
-y_ar = np.array(list([y]))
-
-y_ar = 0.01 - y_ar
+x_ar = list(x)
+y_ar = list(y)
+x_ar = np.array([x_ar])
+y_ar = np.array([y_ar])
+y_ar = 0.01-y_ar
 x_ar = 10.0/x_ar
 y_ar = np.log(y_ar)
 x_ar = np.log(x_ar)
