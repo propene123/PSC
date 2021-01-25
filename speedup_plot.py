@@ -26,7 +26,7 @@ pyplot.grid(b=True, which='minor', color='#999999', alpha=0.2)
 pyplot.legend(loc="upper left")
 pyplot.xlabel('Number of Cores')
 pyplot.ylabel('Speedup')
-pyplot.savefig('Speedup_plot.svg', format='svg')
+pyplot.savefig('Speedup_plot.pdf', format='pdf')
 pyplot.show()
 
 

@@ -31,7 +31,7 @@ print(m)
 print(c)
 trend = np.arange(9,16)
 trend_y = objective(trend, m, c)
-pyplot.scatter(x_ar.flatten(), y_ar.flatten(), label='Explicit Euler')
+pyplot.scatter(x_ar.flatten(), y_ar.flatten(), label='Explicit Euler', marker='^')
 pyplot.plot(trend, trend_y, '--', color='red', label=f'Euler Trend Line p={m:.3f}')
 
 
@@ -59,7 +59,7 @@ print(c)
 trend = np.arange(9,16)
 trend_y = objective(trend, m, c)
 pyplot.scatter(x_ar.flatten(), y_ar.flatten(), label=r'Runge Kutta 2nd Order')
-pyplot.plot(trend, trend_y, '--', color='green', label=f'RK(2) Trend Line p={m:.3f}')
+pyplot.plot(trend, trend_y, ':', color='green', label=f'RK(2) Trend Line p={m:.3f}')
 
 
 pyplot.xlabel(r'$\log{N}$        (h=T/N)')
@@ -68,6 +68,7 @@ pyplot.legend(loc="upper right")
 pyplot.grid(b=True, which='major', color='#666666')
 pyplot.minorticks_on()
 pyplot.grid(b=True, which='minor', color='#999999', alpha=0.2)
+pyplot.savefig('convplot.pdf', format='pdf')
 pyplot.show()
 
 
