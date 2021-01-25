@@ -216,7 +216,7 @@ void future_shot(){
   double* force1 = new double[NumberOfBodies];
   double* force2 = new double[NumberOfBodies];
 
-  #pragma omp parallel for
+  #pragma omp parallel for if(NumberOfBodies > 400)
   for (int j = 0; j < NumberOfBodies; j++){
       force0[j] = 0;
       force1[j] = 0;
@@ -234,7 +234,7 @@ void future_shot(){
           }
       }
   }
-      #pragma omp parallel for
+      #pragma omp parallel for if(NumberOfBodies > 400)
       for (int j = 0;j<NumberOfBodies;j++){
           x[j][0] = x[j][0] + timeStepSize/2 * v[j][0];
           x[j][1] = x[j][1] + timeStepSize/2 * v[j][1];
@@ -279,7 +279,7 @@ void updateBody() {
   double* force2 = new double[NumberOfBodies];
   double* distances = new double[NumberOfBodies];
 
-#pragma omp parallel for
+#pragma omp parallel for if(NumberOfBodies > 400)
   for (int j = 0; j < NumberOfBodies; j++){
       force0[j] = 0;
       force1[j] = 0;
@@ -298,7 +298,7 @@ void updateBody() {
           }
       }
   }
-      #pragma omp parallel for reduction(max:maxV)
+      #pragma omp parallel for reduction(max:maxV) if(NumberOfBodies > 400)
       for (int j = 0;j<NumberOfBodies;j++){
           x[j][0] = x_back[j][0] + timeStepSize * v[j][0];
           x[j][1] = x_back[j][1] + timeStepSize * v[j][1];
@@ -308,7 +308,7 @@ void updateBody() {
           v[j][2] = v_back[j][2] + timeStepSize * force2[j] / mass[j];
           maxV = std::max(maxV, std::sqrt( v[j][0]*v[j][0] + v[j][1]*v[j][1] + v[j][2]*v[j][2]));
       }
-      #pragma omp parallel for reduction(min:minDx)
+      #pragma omp parallel for reduction(min:minDx) if(NumberOfBodies > 400)
       for(int j = 0; j<NumberOfBodies;j++){
           for (int i = j+1;i<NumberOfBodies;i++){
             const double distance = sqrt((x[j][0]-x[i][0]) * (x[j][0]-x[i][0]) +(x[j][1]-x[i][1]) * (x[j][1]-x[i][1]) + (x[j][2]-x[i][2]) * (x[j][2]-x[i][2]));
@@ -322,7 +322,7 @@ void updateBody() {
   do {
       num_cols = 0;
       for(int i = 0;i<NumberOfBodies;i++){
-          #pragma omp parallel for
+          #pragma omp parallel for if(NumberOfBodies > 400)
           for(int j = i+1;j<NumberOfBodies;j++){
               distances[j] = sqrt((x[i][0]-x[j][0]) * (x[i][0]-x[j][0]) +
                                    (x[i][1]-x[j][1]) * (x[i][1]-x[j][1]) +
